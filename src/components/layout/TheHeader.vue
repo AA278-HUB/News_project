@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { useTheme } from '../../composables/useTheme'
 import { useAuthStore } from '../../stores/auth'
 import UserDropdown from '../user/UserDropdown.vue'
+import { CloudRain, Sun } from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -11,6 +12,27 @@ const { mood, setMood } = useTheme()
 const auth = useAuthStore()
 
 const isHome = computed(() => route.name === 'home')
+
+function pickDaily(texts: string[]) {
+  const key = new Date().toISOString().slice(0, 10)
+  let h = 0
+  for (let i = 0; i < key.length; i += 1) h = (h * 31 + key.charCodeAt(i)) >>> 0
+  return texts[h % texts.length] ?? ''
+}
+
+const doodleIcon = computed(() => (mood.value === 'positive' ? Sun : CloudRain))
+const slogan = computed(() =>
+  mood.value === 'positive' ? '今天也是阳光明媚的一天！' : '深渊在凝视着你...',
+)
+const dailyTail = computed(() =>
+  pickDaily([
+    '新闻先看事实，再看观点。',
+    '1 分钟扫榜，3 分钟深读。',
+    '热度会变，信息结构更重要。',
+    '今天也做一个慢判断的人。',
+    '别急着站队，先把样本看够。',
+  ]),
+)
 
 async function goHome() {
   await router.push({ name: 'home' })
@@ -21,10 +43,15 @@ async function goHome() {
   <header class="topbar">
     <div class="topbar__inner">
       <button class="brand" type="button" @click="goHome" :aria-current="isHome ? 'page' : undefined">
-        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="doodle" :class="{ 'is-negative': mood === 'negative' }" aria-hidden="true">
+          <component :is="doodleIcon" :size="18" class="doodle__icon" :class="{ 'is-sun': mood === 'positive' }" />
+        </span>
         <span class="brand__text">
           <span class="brand__title">News Atmosphere</span>
-          <span class="brand__subtitle">带登录态 · 路由 · 双主题</span>
+          <span class="brand__subtitle">社区型信息密度示例</span>
+          <span class="brand__doodle" :class="{ 'is-negative': mood === 'negative' }">
+            {{ slogan }} {{ dailyTail }}
+          </span>
         </span>
       </button>
 
@@ -36,7 +63,7 @@ async function goHome() {
             type="button"
             @click="setMood('positive')"
           >
-            Positive
+            积极
           </button>
           <button
             class="mood-switch__btn"
@@ -44,9 +71,8 @@ async function goHome() {
             type="button"
             @click="setMood('negative')"
           >
-            Negative
+            消极
           </button>
-          <span class="mood-switch__glow" aria-hidden="true"></span>
         </div>
 
         <div class="divider" aria-hidden="true"></div>
@@ -63,92 +89,108 @@ async function goHome() {
   position: sticky;
   top: 0;
   z-index: 30;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: color-mix(in srgb, var(--surface) 74%, transparent);
-  border-bottom: var(--stroke) solid var(--border);
-  transition: all var(--t);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .topbar__inner {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 14px 18px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  transition: all var(--t);
+  gap: 12px;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   user-select: none;
   appearance: none;
   border: 0;
   background: transparent;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: calc(var(--radius) + 6px);
-  transition: all var(--t);
+  padding: 4px 6px;
+  border-radius: 6px;
 }
 
 .brand:hover {
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
-}
-
-.brand__mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background:
-    radial-gradient(18px 18px at 30% 35%, color-mix(in srgb, var(--primary) 70%, #ffffff), transparent 68%),
-    radial-gradient(22px 20px at 70% 65%, color-mix(in srgb, var(--primary-2) 72%, #ffffff), transparent 66%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 70%, transparent),
-      color-mix(in srgb, var(--surface-2) 65%, transparent)
-    );
-  border: var(--stroke) solid var(--border);
-  box-shadow: var(--shadow-2);
-  transition: all var(--t);
+  background: var(--surfaceHover);
 }
 
 .brand__text {
   display: grid;
   gap: 2px;
   text-align: left;
-  transition: all var(--t);
 }
 
 .brand__title {
-  font-weight: 760;
-  letter-spacing: 0.2px;
-  line-height: 1.15;
+  font-weight: 800;
+  line-height: 1.2;
   color: var(--text);
-  transition: all var(--t);
 }
 
 .brand__subtitle {
   font-size: 12px;
   color: var(--muted);
-  transition: all var(--t);
+}
+
+.brand__doodle {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--muted);
+  font-family:
+    ui-rounded,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Helvetica,
+    Arial;
+}
+
+.doodle {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+
+.doodle__icon {
+  color: var(--accent);
+}
+
+.doodle__icon.is-sun {
+  animation: spinSun 5.5s linear infinite;
+}
+
+.doodle.is-negative {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--danger) 24%, transparent),
+    0 0 10px color-mix(in srgb, var(--danger) 26%, transparent);
+}
+
+.brand__doodle.is-negative {
+  color: var(--danger);
+  text-shadow: 0 0 6px color-mix(in srgb, var(--danger) 35%, transparent);
+  animation: neonFlicker 1.25s linear infinite;
 }
 
 .right {
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  transition: all var(--t);
 }
 
 .divider {
   width: 1px;
   height: 28px;
-  background: color-mix(in srgb, var(--border) 85%, transparent);
-  transition: all var(--t);
+  background: var(--border);
 }
 
 /* Segmented mood switch */
@@ -157,29 +199,24 @@ async function goHome() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  width: 260px;
-  padding: 6px;
-  border-radius: calc(var(--radius) + 6px);
-  background: color-mix(in srgb, var(--surface) 68%, transparent);
-  border: var(--stroke) solid var(--border);
-  box-shadow: var(--shadow-2);
-  transition: all var(--t);
+  width: 140px;
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--mutedBg);
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 
 .mood-switch__btn {
   position: relative;
-  z-index: 2;
   appearance: none;
-  border: 0;
+  border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
-  padding: 10px 12px;
-  border-radius: var(--radius);
+  padding: 6px 10px;
+  border-radius: 5px;
   font-weight: 700;
-  letter-spacing: 0.2px;
   cursor: pointer;
-  transition: all var(--t);
 }
 
 .mood-switch__btn:hover {
@@ -188,72 +225,56 @@ async function goHome() {
 
 .mood-switch__btn.is-active {
   color: var(--text);
-}
-
-.mood-switch__glow {
-  position: absolute;
-  inset: 6px;
-  width: calc(50% - 6px);
-  border-radius: var(--radius);
-  background:
-    radial-gradient(60px 60px at 30% 35%, color-mix(in srgb, var(--primary) 45%, transparent), transparent 70%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 25%, transparent),
-      color-mix(in srgb, var(--surface-2) 35%, transparent)
-    );
-  border: var(--stroke) solid color-mix(in srgb, var(--border) 65%, transparent);
-  box-shadow: 0 18px 55px var(--ring);
-  transform: translateX(0%);
-  transition: all var(--t);
-  pointer-events: none;
-}
-
-.theme-negative .mood-switch__glow {
-  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
-}
-
-.mood-switch:has(.mood-switch__btn:last-child.is-active) .mood-switch__glow {
-  transform: translateX(100%);
+  background: var(--surface);
+  border-color: var(--accent);
 }
 
 .login {
-  border: 0;
+  border: 1px solid var(--border);
   cursor: pointer;
-  padding: 10px 12px;
-  border-radius: calc(var(--radius) - 2px);
-  font-weight: 780;
-  letter-spacing: 0.2px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 750;
   color: var(--text);
-  background:
-    radial-gradient(70px 50px at 30% 30%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 70%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 36%, transparent),
-      color-mix(in srgb, var(--surface-2) 52%, transparent)
-    );
-  border: var(--stroke) solid color-mix(in srgb, var(--border) 80%, transparent);
-  box-shadow: 0 18px 52px color-mix(in srgb, var(--ring) 35%, transparent);
-  transition: all var(--t);
+  background: var(--surface);
   white-space: nowrap;
 }
 
 .login:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 24px 70px color-mix(in srgb, var(--ring) 42%, transparent);
+  border-color: var(--accent);
 }
 
 @media (max-width: 520px) {
   .topbar__inner {
-    padding: 12px 14px;
-  }
-
-  .mood-switch {
-    width: 210px;
+    padding: 10px 10px;
   }
 
   .divider {
     display: none;
+  }
+}
+
+@keyframes spinSun {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes neonFlicker {
+  0%,
+  18%,
+  22%,
+  62%,
+  64%,
+  100% {
+    opacity: 1;
+  }
+  20%,
+  63% {
+    opacity: 0.62;
   }
 }
 </style>

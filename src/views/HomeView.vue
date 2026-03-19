@@ -1,110 +1,96 @@
 <script setup lang="ts">
 import NewsCard from '../components/news/NewsCard.vue'
-import { NEWS } from '../data/news'
-import { useTheme } from '../composables/useTheme'
+import { ALL_NEWS } from '../data/news'
+import Pagination from '../components/common/Pagination.vue'
+import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const { label } = useTheme()
+const router = useRouter()
+
+const pageSize = 20
+const page = ref(1)
+
+const total = computed(() => ALL_NEWS.length)
+const paged = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return ALL_NEWS.slice(start, start + pageSize)
+})
+
+async function openNews(id: string) {
+  await router.push({ name: 'news-detail', params: { id } })
+}
 </script>
 
 <template>
-  <main class="content">
-    <section class="hero" aria-label="页面导语">
-      <div class="hero__bg" aria-hidden="true"></div>
-      <div class="hero__inner">
-        <div class="hero__kicker">Today’s Mood</div>
-        <h1 class="hero__title">{{ label }}</h1>
-        <p class="hero__desc">
-          这是一个“模块化 + 登录态 + 路由”的新手友好示例：主题由 CSS 变量统一驱动，所有组件共享同一套视觉
-          token，并在 0.5s 内完成丝滑过渡。
-        </p>
+  <main class="page">
+    <div class="wrap">
+      <div class="listHead">
+        <div class="listHead__title">搜索式热榜</div>
+        <div class="listHead__hint">15-20 条/屏 · #f0f0f0 分割线 · 点缀色随主题切换</div>
       </div>
-    </section>
 
-    <section class="grid" aria-label="新闻列表">
-      <NewsCard v-for="item in NEWS" :key="item.id" :item="item" />
-    </section>
+      <section class="list" aria-label="新闻列表">
+        <button v-for="item in paged" :key="item.id" class="list__item" type="button" @click="openNews(item.id)">
+          <NewsCard :item="item" />
+        </button>
+      </section>
+
+      <Pagination v-model:page="page" :page-size="pageSize" :total="total" />
+    </div>
   </main>
 </template>
 
 <style scoped>
-.content {
+.page {
+  padding: 12px 12px 40px;
+}
+
+.wrap {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 22px 18px 64px;
-  transition: all var(--t);
 }
 
-.hero {
-  position: relative;
-  border-radius: var(--radius-card);
-  border: var(--stroke) solid var(--border);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  transition: all var(--t);
+.listHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
 }
 
-.hero__bg {
-  position: absolute;
-  inset: -2px;
-  background:
-    radial-gradient(700px 320px at 12% 25%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 60%),
-    radial-gradient(520px 280px at 70% 20%, color-mix(in srgb, var(--primary-2) 22%, transparent), transparent 62%),
-    linear-gradient(180deg, transparent, color-mix(in srgb, var(--surface-2) 65%, transparent));
-  opacity: 1;
-  transition: all var(--t);
+.listHead__title {
+  font-weight: 900;
+  color: var(--text);
+  font-size: 16px;
 }
 
-.theme-negative .hero__bg {
-  background:
-    radial-gradient(600px 300px at 18% 22%, rgba(255, 70, 70, 0.16), transparent 62%),
-    radial-gradient(560px 280px at 72% 22%, rgba(255, 180, 40, 0.1), transparent 62%),
-    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.25));
-}
-
-.hero__inner {
-  position: relative;
-  padding: 26px 22px;
-  transition: all var(--t);
-}
-
-.hero__kicker {
+.listHead__hint {
+  color: var(--muted);
   font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted);
-  transition: all var(--t);
 }
 
-.hero__title {
-  margin: 10px 0 10px;
-  font-size: clamp(26px, 3.2vw, 40px);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
-  font-weight: 860;
-  transition: all var(--t);
+.list {
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
-.hero__desc {
-  margin: 0;
-  max-width: 72ch;
-  color: var(--muted);
-  line-height: 1.7;
-  transition: all var(--t);
+.list__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: inherit;
 }
 
-.grid {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 14px;
-  transition: all var(--t);
+.list__item + .list__item {
+  border-top: 1px solid var(--border);
 }
 
-@media (min-width: 760px) {
-  .grid {
-    gap: 16px;
-  }
+.list__item:hover {
+  background: var(--surfaceHover);
 }
 </style>
 
